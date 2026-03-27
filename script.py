@@ -1,50 +1,67 @@
 import psycopg2
 import os
+import requests
 from datetime import datetime
 import dotenv
 
-# Load environment variables from .env file
 dotenv.load_dotenv()
-print("Starting DB test...")
 
-conn = psycopg2.connect(
-    host=os.getenv("DB_HOST"),
-    database=os.getenv("DB_NAME"),
-    user=os.getenv("DB_USER"),
-    password=os.getenv("DB_PASSWORD"),
-    port=os.getenv("DB_PORT")
-)
-print("DB_HOST:", os.getenv("DB_HOST")) 
-print("Connected to database")
+print("Starting WAQI logger...")
+
+TOKEN = os.getenv("WAQI_TOKEN")
+station= os.getenv("WAQI_STATION")
+
+URL = f"https://api.waqi.info/feed/@{station}/?token={TOKEN}"
 
 try:
+    response = requests.get(URL)
+    result = response.json()
+
+    data = result["data"]
+
+    iaqi = data.get("iaqi", {})
+
+    pm25 = iaqi.get("pm25", {}).get("v")
+    pm10 = iaqi.get("pm10", {}).get("v")
+    no2  = iaqi.get("no2", {}).get("v")
+    so2  = iaqi.get("so2", {}).get("v")
+    o3   = iaqi.get("o3", {}).get("v")
+
+    timestamp = data["time"]["iso"]
+    station = data["city"]["name"]
+
+    print("Extracted:", pm25, pm10, no2, so2, o3)
+
+    conn = psycopg2.connect(
+        host=os.getenv("DB_HOST"),
+        database=os.getenv("DB_NAME"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        port=os.getenv("DB_PORT")
+    )
+
     cur = conn.cursor()
 
-    # Insert dummy row
+    # 🔹 Insert
     cur.execute("""
         INSERT INTO aqi_logs (timestamp, station, pm25, pm10, no2, so2, o3)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
     """, (
-        datetime.now(),
-        "IHBAS_TEST",
-        100,
-        150,
-        40,
-        10,
-        25
+        timestamp,
+        station,
+        pm25,
+        pm10,
+        no2,
+        so2,
+        o3
     ))
 
     conn.commit()
-    print("Dummy row inserted")
 
-    # Verify insert
-    cur.execute("SELECT * FROM aqi_logs ORDER BY id DESC LIMIT 1;")
-    row = cur.fetchone()
-
-    print("Latest row:", row)
+    print("✅ Data inserted successfully")
 
     cur.close()
     conn.close()
 
 except Exception as e:
-    print("Error:", e)
+    print("❌ Error:", e)
