@@ -7,17 +7,17 @@ import dotenv
 dotenv.load_dotenv()
 print("Starting DB test...")
 
-try:
-    conn = psycopg2.connect(
-        host=os.getenv("DB_HOST"),
-        database=os.getenv("DB_NAME"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        port=os.getenv("DB_PORT")
-    )
-    print("DB_HOST:", os.getenv("DB_HOST")) 
-    print("Connected to database")
+conn = psycopg2.connect(
+    host=os.getenv("DB_HOST"),
+    database=os.getenv("DB_NAME"),
+    user=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASSWORD"),
+    port=os.getenv("DB_PORT")
+)
+print("DB_HOST:", os.getenv("DB_HOST")) 
+print("Connected to database")
 
+try:
     cur = conn.cursor()
 
     # Insert dummy row
