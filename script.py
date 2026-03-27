@@ -15,7 +15,7 @@ try:
         password=os.getenv("DB_PASSWORD"),
         port=os.getenv("DB_PORT")
     )
-
+    print("DB_HOST:", os.getenv("DB_HOST")) 
     print("Connected to database")
 
     cur = conn.cursor()
