@@ -1,7 +1,10 @@
 import psycopg2
 import os
 from datetime import datetime
+import dotenv
 
+# Load environment variables from .env file
+dotenv.load_dotenv()
 print("Starting DB test...")
 
 try:
