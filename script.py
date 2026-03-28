@@ -9,9 +9,9 @@ dotenv.load_dotenv()
 print("Starting WAQI logger...")
 
 TOKEN = os.getenv("WAQI_TOKEN")
-station= os.getenv("WAQI_STATION")
+station_id= os.getenv("WAQI_STATION")
 
-URL = f"https://api.waqi.info/feed/@{station}/?token={TOKEN}"
+URL = f"https://api.waqi.info/feed/@{station_id}/?token={TOKEN}"
 
 try:
     response = requests.get(URL)
@@ -26,8 +26,12 @@ try:
     no2  = iaqi.get("no2", {}).get("v")
     so2  = iaqi.get("so2", {}).get("v")
     o3   = iaqi.get("o3", {}).get("v")
+    co  = iaqi.get("co", {}).get("v")
+    temperature = iaqi.get("t", {}).get("v")
+    humidity    = iaqi.get("h", {}).get("v")
+    aqi = data.get("aqi")
 
-    timestamp = data["time"]["iso"]
+    timestamp = datetime.fromisoformat(data["time"]["iso"])
     station = data["city"]["name"]
 
     print("Extracted:", pm25, pm10, no2, so2, o3)
@@ -44,24 +48,29 @@ try:
 
     # 🔹 Insert
     cur.execute("""
-        INSERT INTO aqi_logs (timestamp, station, pm25, pm10, no2, so2, o3)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
-    """, (
-        timestamp,
-        station,
-        pm25,
-        pm10,
-        no2,
-        so2,
-        o3
-    ))
+    INSERT INTO aqi_logs 
+    (timestamp, station, pm25, pm10, no2, so2, o3, co, temperature, humidity, aqi)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+""", (
+    timestamp,
+    station,
+    pm25,
+    pm10,
+    no2,
+    so2,
+    o3,
+    co,
+    temperature,
+    humidity,
+    aqi
+))
 
     conn.commit()
 
-    print("✅ Data inserted successfully")
+    print("Data inserted successfully")
 
     cur.close()
     conn.close()
 
 except Exception as e:
-    print("❌ Error:", e)
+    print("Error:", e)
