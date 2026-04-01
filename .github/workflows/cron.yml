@@ -2,7 +2,7 @@ name: AQI Logger
 
 on:
     schedule:
-        - cron: "*/15 * * * *" # every 15 min
+        - cron: "*/5 * * * *" # every 1 min
     workflow_dispatch: # manual run button
 
 jobs:
